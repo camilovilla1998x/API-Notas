@@ -1,85 +1,152 @@
-# Notes API
+# 📝 Notes API — Spring Boot RESTful Service
 
-## 🏷 Proyecto
-**Notes API** – API REST en Spring Boot para manejar notas con CRUD completo, validaciones, manejo de excepciones y arquitectura desacoplada.
+## 📌 Descripción
 
----
+**Notes API** es una API REST desarrollada con **Spring Boot** que permite gestionar notas mediante operaciones CRUD (Create, Read, Update, Delete).  
+El proyecto fue construido con un enfoque **profesional**, aplicando buenas prácticas de arquitectura, validaciones, manejo de excepciones y pruebas.
 
-## ⚡ Tecnologías
-- Java 17+  
-- Spring Boot 3.x  
-- Spring Data JPA  
-- MySQL  
-- Lombok  
-- Validation (`jakarta.validation`)  
-- Maven  
+Este proyecto sirve como **base sólida para aplicaciones backend reales** y como práctica avanzada de Spring Boot.
 
 ---
 
-## 📦 Arquitectura y diseño
+## 🛠️ Tecnologías utilizadas
 
-### 1️⃣ Capa de persistencia
-- **Entity:** `Note`  
-  - Campos: `id`, `title`, `content`, `createdAt`, `updatedAt`  
-  - `@PrePersist` y `@PreUpdate` para manejo automático de fechas  
-  - Setters de `id`, `createdAt` y `updatedAt` protegidos con `AccessLevel.NONE`  
-
-- **Repository:** `NoteRepository`  
-  - Extiende `JpaRepository<Note, Long>`  
-
----
-
-### 2️⃣ DTOs (Data Transfer Objects)
-- **Entrada:** `NoteRequest`  
-  - Campos: `title`, `content`  
-  - Validaciones con `@NotBlank` y `@Size`  
-- **Salida:** `NoteResponse`  
-  - Campos: `id`, `title`, `content`, `createdAt`, `updatedAt`  
-
-> Los DTOs aseguran que la API no esté acoplada a la base de datos ni a la Entity.
+- Java 17
+- Spring Boot
+- Spring Web
+- Spring Data JPA
+- Hibernate
+- MySQL
+- Jakarta Bean Validation
+- Lombok
+- JUnit 5
+- Mockito
+- MockMvc
+- Maven
 
 ---
 
-### 3️⃣ Mapper
-- **`NoteMapper`**  
-  - Métodos estáticos para convertir:
-    - `NoteRequest → Note`  
-    - `Note → NoteResponse`  
-  - Responsable **solo de mover datos**, sin lógica de negocio ni acceso a BD.  
+## 📂 Estructura del proyecto
+
+```
+src/main/java/com/example/notes_api
+│
+├── controller
+│   └── NoteController.java
+│
+├── service
+│   ├── NoteService.java
+│   └── impl
+│       └── NoteServiceImpl.java
+│
+├── repository
+│   └── NoteRepository.java
+│
+├── entity
+│   └── Note.java
+│
+├── dto
+│   ├── request
+│   │   └── NoteRequest.java
+│   ├── response
+│   │   └── NoteResponse.java
+│   └── error
+│       ├── ApiErrorResponse.java
+│       └── ValidationErrorResponse.java
+│
+├── mapper
+│   └── NoteMapper.java
+│
+├── exception
+│   └── NoteNotFoundException.java
+│
+├── handler
+│   └── GlobalExceptionHandler.java
+│
+└── NotesApiApplication.java
+```
 
 ---
 
-### 4️⃣ Service
-- **Interface:** `NoteService`  
-- **Implementación:** `NoteServiceImpl`  
-- Funciona como **traductor entre DTOs y Entities**  
-- Métodos:
-  - `create(NoteRequest)` → `NoteResponse`  
-  - `getAll()` → `List<NoteResponse>`  
-  - `getById(Long)` → `NoteResponse`  
-  - `update(Long, NoteRequest)` → `NoteResponse`  
-  - `deleteById(Long)` → `void`  
+## 🧱 Modelo de dominio
+
+### 🗒️ Note (Entity)
+
+Representa una nota persistida en base de datos.
+
+- `id`
+- `title`
+- `content`
+- `createdAt`
+- `updatedAt`
+
+Características:
+- Uso de `@PrePersist` y `@PreUpdate` para auditoría automática
+- No se exponen setters para campos sensibles (`id`, `createdAt`, `updatedAt`)
 
 ---
 
-### 5️⃣ Controller
-- **`NoteController`** con endpoints CRUD
-- Maneja **DTOs directamente** y activa validaciones con `@Valid`
-- Endpoints:
-| Método | URL | Request | Response |
-|--------|-----|---------|---------|
-| GET | `/api/notes` | - | `List<NoteResponse>` |
-| GET | `/api/notes/{id}` | - | `NoteResponse` |
-| POST | `/api/notes` | `NoteRequest` | `NoteResponse` |
-| PUT | `/api/notes/{id}` | `NoteRequest` | `NoteResponse` |
-| DELETE | `/api/notes/{id}` | - | void |
+## 🔁 Endpoints disponibles
+
+### ➕ Crear nota
+`POST /api/notes`
+
+### 📄 Obtener todas las notas
+`GET /api/notes`
+
+### 🔍 Obtener nota por ID
+`GET /api/notes/{id}`
+
+### ✏️ Actualizar nota
+`PUT /api/notes/{id}`
+
+### 🗑️ Eliminar nota
+`DELETE /api/notes/{id}`
+
+- DELETE exitoso devuelve **204 No Content**
 
 ---
 
-### 6️⃣ Manejo de excepciones
-- `NoteNotFoundException` → 404  
-- `MethodArgumentNotValidException` → 400 (validaciones)  
-- `GlobalExceptionHandler` centraliza las respuestas y devuelve JSON limpio:
+## 📦 DTOs
+
+### NoteRequest
+Usado para crear y actualizar notas.
+
+Validaciones:
+- `title`: obligatorio, máximo 100 caracteres
+- `content`: obligatorio
+
+### NoteResponse
+Usado para exponer datos al cliente sin filtrar la entidad.
+
+---
+
+## 🔄 Mapper
+
+El mapper se encarga de:
+- Convertir `NoteRequest` → `Note`
+- Convertir `Note` → `NoteResponse`
+
+Esto evita:
+- Exponer entidades directamente
+- Acoplamiento innecesario entre capas
+
+---
+
+## ❌ Manejo de excepciones
+
+### Excepciones personalizadas
+- `NoteNotFoundException` → cuando una nota no existe
+
+### GlobalExceptionHandler
+Centraliza el manejo de errores usando `@RestControllerAdvice`.
+
+Maneja:
+- `NoteNotFoundException` → **404 Not Found**
+- `MethodArgumentNotValidException` → **400 Bad Request**
+
+Ejemplo de respuesta de validación:
+
 ```json
 {
   "errors": [
@@ -89,3 +156,86 @@
     }
   ]
 }
+```
+
+---
+
+## ✅ Validaciones
+
+- Uso de `@Valid` en los controllers
+- Validaciones declarativas con Bean Validation
+- Respuestas claras y consistentes
+
+---
+
+## 🧪 Testing
+
+### Tests de controlador
+
+- `@WebMvcTest`
+- `MockMvc`
+- `MockitoBean`
+- Tests por endpoint
+
+Se validan:
+- Status HTTP
+- Respuesta JSON
+- Manejo de errores
+- Contrato REST
+
+Los tests **no dependen de base de datos**.
+
+---
+
+## 🧠 Buenas prácticas aplicadas
+
+- Controllers delgados
+- Service por interfaz
+- DTOs para entrada y salida
+- Mapper dedicado
+- Manejo centralizado de excepciones
+- Tests de contrato HTTP
+- Uso correcto de códigos de estado REST
+
+---
+
+## 🚀 Ejecución del proyecto
+
+1. Crear base de datos MySQL:
+```sql
+CREATE DATABASE notes_db;
+```
+
+2. Configurar `application.properties`
+
+3. Ejecutar:
+```bash
+mvn spring-boot:run
+```
+
+---
+
+## 📈 Estado del proyecto
+
+✔ CRUD completo  
+✔ Arquitectura limpia  
+✔ Validaciones  
+✔ Manejo de excepciones  
+✔ Tests  
+✔ Listo para producción básica  
+
+---
+
+## 📌 Próximos pasos sugeridos
+
+- Swagger / OpenAPI
+- ResponseEntity
+- Paginación y sorting
+- Seguridad (JWT)
+
+---
+
+## 👨‍💻 Autor
+Camilo Villa Agudelo
+
+Proyecto desarrollado como práctica avanzada de Spring Boot y arquitectura backend.
